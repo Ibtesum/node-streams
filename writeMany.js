@@ -30,18 +30,66 @@
 //   console.timeEnd("writeMany");
 // })();
 
-const fs = require("node:fs/promises");
-// Execution time :
+// const fs = require("node:fs/promises");
+
+// DON'T DO THIS!!
+// Execution time : 530ms
 // CPU usage: 100% (one core)
-// Memory usage:
+// Memory usage: 100MB
+// (async () => {
+//   console.time("TotalTime");
+//   const fileHandler = await fs.open("test.txt", "w");
+//   const stream = fileHandler.createWriteStream();
+//   for (let i = 1; i <= 100000; i++) {
+//     const buff = Buffer.from(` ${i} `, "utf-8");
+//     stream.write(buff);
+//   }
+//   await fileHandler.close();
+//   console.timeEnd("TotalTime");
+// })();
+
+const fs = require("node:fs/promises");
+
 (async () => {
   console.time("TotalTime");
   const fileHandler = await fs.open("test.txt", "w");
   const stream = fileHandler.createWriteStream();
-  for (let i = 1; i <= 100000; i++) {
-    const buff = Buffer.from(` ${i} `, "utf-8");
-    stream.write(buff);
-  }
-  await fileHandler.close();
-  console.timeEnd("TotalTime");
+
+  // const buff = Buffer.alloc(16384, "10");
+  // // console.log(stream.write(Buffer.alloc(1, "a")));
+  // console.log(stream.write(buff));
+  // console.log(stream.writableLength);
+
+  // stream.on("drain", () => {
+  //   console.log(stream.write(Buffer.alloc(16384, "a")));
+  //   console.log(stream.writableLength);
+  //   console.log("we are now safe to write more!");
+  // });
+
+  let i = 0;
+
+  const writeMany = () => {
+    while (i < 100000) {
+      const buff = Buffer.from(` ${i} `, "utf-8");
+      i++;
+
+      // This is our last write
+      if (i === 99999) return stream.end(buff);
+
+      // if stream.write returns false, stop the loop.
+      if (!stream.write(buff)) break;
+    }
+  };
+
+  writeMany();
+
+  // resumes once our stream's internal buffer is empty
+  stream.on("drain", () => {
+    writeMany();
+  });
+
+  stream.on("finish", () => {
+    console.timeEnd("TotalTime");
+    fileHandler.close();
+  });
 })();
