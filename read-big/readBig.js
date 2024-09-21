@@ -10,8 +10,14 @@ const fs = require("node:fs/promises");
   const streamWrite = fileHandleWrite.createWriteStream();
 
   streamRead.on("data", (chunk) => {
-    streamWrite.write(chunk, (err) => {
-      console.log(err);
-    });
+    // MUST DO: IF you dont want to crash your system
+    if (!streamWrite.write(chunk)) {
+      streamRead.pause();
+    }
+  });
+
+  // MUST DO: IF you dont want to crash your system
+  streamWrite.on("drain", () => {
+    streamRead.resume();
   });
 })();
