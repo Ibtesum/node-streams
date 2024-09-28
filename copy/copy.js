@@ -54,7 +54,7 @@ const { pipeline } = require("node:stream");
 (async () => {
   console.time("copy");
 
-  const srcFile = await fs.open("test-big.txt", "r");
+  const srcFile = await fs.open("text-small.txt", "r");
   const destFile = await fs.open("text-copy.txt", "w");
 
   const readStream = srcFile.createReadStream();
